@@ -1,5 +1,15 @@
 #!/usr/bin/env node
 
+/**
+ * CLI entry point for eggs-ai.
+ *
+ * Each command maps to an agent function (src/agents/) or a utility.
+ * Provider resolution: --provider flag → config file default → env var auto-detect → Ollama.
+ *
+ * Commands that need an LLM: doctor, build, config, calamares, wardrobe, ask, chat
+ * Commands that don't: status, providers, update, mcp, serve (serve starts the server, not calls it)
+ */
+
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';

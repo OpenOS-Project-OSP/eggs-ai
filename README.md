@@ -17,6 +17,11 @@ Eggs-AI understands penguins-eggs commands, configurations, and workflows. It pr
 | `eggs-ai ask` | General Q&A about penguins-eggs |
 | `eggs-ai chat` | Interactive conversation mode |
 | `eggs-ai status` | System info snapshot (no AI needed) |
+| `eggs-ai serve` | Start HTTP API server for eggs-gui integration |
+| `eggs-ai mcp` | Start MCP server for AI agent integration (Cursor, Claude Desktop, etc.) |
+| `eggs-ai update` | Fetch latest penguins-eggs data from GitHub |
+| `eggs-ai providers list` | Show all registered LLM providers |
+| `eggs-ai providers init` | Create sample ~/.eggs-ai.yaml config |
 
 ## Installation
 
@@ -147,16 +152,17 @@ eggs-ai chat
 ```
 eggs-ai/
 ├── src/
-│   ├── agents/              # Domain-specific AI agents
+│   ├── agents/              # Domain-specific AI agents (each: provider + args → string)
 │   │   ├── doctor.ts        # System diagnostics
 │   │   ├── build.ts         # ISO build guidance
 │   │   ├── config.ts        # Config explain/generate
 │   │   ├── calamares.ts     # Calamares assistant
 │   │   ├── wardrobe.ts      # Wardrobe/costume help
-│   │   └── ask.ts           # General Q&A
+│   │   └── ask.ts           # General Q&A (includes dynamic knowledge)
 │   ├── providers/           # LLM backend abstraction
-│   │   ├── base.ts          # LLMProvider interface + ProviderRegistry
-│   │   ├── config-loader.ts # ~/.eggs-ai.yaml parser
+│   │   ├── base.ts          # LLMProvider interface + ProviderRegistry singleton
+│   │   ├── config-loader.ts # ~/.eggs-ai.yaml parser + custom provider registration
+│   │   ├── openai-stream.ts # Shared SSE streaming for OpenAI-compatible APIs
 │   │   ├── gemini.ts        # Google Gemini
 │   │   ├── openai.ts        # OpenAI / compatible
 │   │   ├── anthropic.ts     # Anthropic Claude
@@ -164,18 +170,105 @@ eggs-ai/
 │   │   ├── groq.ts          # Groq (fast inference)
 │   │   ├── ollama.ts        # Ollama (local)
 │   │   ├── custom.ts        # Generic OpenAI-compatible (any endpoint)
-│   │   └── index.ts         # Registry setup + auto-detection
-│   ├── tools/               # System inspection utilities
+│   │   └── index.ts         # Built-in registration + auto-detection
+│   ├── knowledge/           # Embedded + dynamic domain knowledge
+│   │   ├── eggs-reference.ts  # Commands, config, issues, distros, calamares, wardrobe
+│   │   ├── distro-guides.ts   # Per-distro install guides, advanced workflows
+│   │   └── updater.ts         # GitHub fetcher with 24h cache
+│   ├── server/              # HTTP API (REST + SSE streaming)
+│   │   └── api.ts
+│   ├── mcp/                 # Model Context Protocol server (stdio JSON-RPC)
+│   │   └── server.ts
+│   ├── bridge/              # eggs-gui daemon integration
+│   │   ├── daemon-client.ts   # JSON-RPC client for /tmp/eggs-gui.sock
+│   │   └── rpc-methods.ts     # ai.* method handlers
+│   ├── sdk/                 # TypeScript client for the HTTP API
+│   │   ├── client.ts
+│   │   └── index.ts
+│   ├── tools/               # System inspection
 │   │   ├── system-inspect.ts
 │   │   └── eggs-cli.ts
-│   ├── knowledge/           # Embedded domain knowledge
-│   │   └── eggs-reference.ts
 │   └── index.ts             # CLI entry point
+├── test/                    # 9 test files, 80 tests
+├── integrations/            # Drop-in code for eggs-gui frontends
+│   ├── web/ai_panel.py        # NiceGUI panel (Python)
+│   └── tui/ai_client.go       # BubbleTea client (Go)
 ├── examples/
-│   ├── eggs-ai.yaml         # Sample config with many providers
-│   └── register-provider.ts # Programmatic registration example
-└── bin/
-    └── eggs-ai.js
+│   ├── eggs-ai.yaml           # Sample provider config
+│   └── register-provider.ts   # Programmatic registration
+├── packaging/
+│   ├── eggs-ai.service        # systemd unit
+│   └── eggs-ai.desktop        # Desktop entry
+├── proto/
+│   └── eggs-ai-rpc.json       # JSON-RPC schema for eggs-gui
+├── .github/workflows/ci.yml   # CI: Node 18/20/22 matrix
+├── Dockerfile                  # Multi-stage build
+├── docker-compose.yaml         # With optional Ollama sidecar
+└── install.sh                  # Linux installer
+```
+
+See [src/README.md](src/README.md) for module details and [CONTRIBUTING.md](CONTRIBUTING.md) for development workflow.
+
+## MCP Server (AI agent integration)
+
+Eggs-AI exposes 10 tools via the [Model Context Protocol](https://modelcontextprotocol.io), letting other AI agents (Cursor, Claude Desktop, opencode, etc.) use penguins-eggs knowledge directly.
+
+### Setup
+
+Add to your MCP client config:
+
+```json
+{
+  "mcpServers": {
+    "eggs-ai": {
+      "command": "node",
+      "args": ["/path/to/eggs-ai/dist/mcp/server.js"]
+    }
+  }
+}
+```
+
+Or with npx (no build needed):
+
+```json
+{
+  "mcpServers": {
+    "eggs-ai": {
+      "command": "npx",
+      "args": ["tsx", "/path/to/eggs-ai/src/mcp/server.ts"]
+    }
+  }
+}
+```
+
+### Available tools
+
+| Tool | What it returns |
+|------|----------------|
+| `eggs_doctor` | System diagnostic report with issue matching |
+| `eggs_build_plan` | Build plan with produce command and flags |
+| `eggs_config_explain` | Current eggs.yaml content + field reference |
+| `eggs_config_generate` | Config field reference for a given purpose |
+| `eggs_system_status` | Live system info (distro, kernel, disk, eggs status) |
+| `eggs_command_reference` | Full details for any eggs command |
+| `eggs_troubleshoot` | Search issues database by symptom |
+| `eggs_distro_guide` | Per-distro installation guide |
+| `eggs_workflow` | Step-by-step advanced workflow guide |
+| `eggs_calamares_info` | Calamares module reference |
+
+No API key needed — MCP tools return knowledge directly. The calling AI agent provides the reasoning.
+
+## Docker
+
+```bash
+# Build and run
+docker compose up -d
+
+# With local Ollama for offline LLM
+docker compose --profile local-llm up -d
+
+# Pass your API key
+GEMINI_API_KEY=your-key docker compose up -d
 ```
 
 ## Integration with eggs-gui
