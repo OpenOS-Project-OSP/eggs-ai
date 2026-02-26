@@ -8,6 +8,7 @@ import {
   CALAMARES_MODULES,
 } from '../knowledge/eggs-reference.js';
 import { DISTRO_INSTALL_GUIDES, ADVANCED_WORKFLOWS } from '../knowledge/distro-guides.js';
+import { buildDynamicContext } from '../knowledge/updater.js';
 
 /**
  * General Q&A agent: answers any question about penguins-eggs
@@ -62,8 +63,20 @@ ${Object.entries(CALAMARES_MODULES).map(([k, v]) => `${k}: ${v}`).join('\n')}
 ${EGGS_COMMON_ISSUES.map((i) => `- ${i.symptom}`).join('\n')}
 `;
 
+  // Fetch dynamic context (cached, non-blocking on failure)
+  let dynamicContext = '';
+  try {
+    dynamicContext = await buildDynamicContext();
+  } catch {
+    // Offline or rate-limited — use static knowledge only
+  }
+
+  const fullContext = dynamicContext
+    ? knowledgeContext + '\n\n## Live Data (from GitHub)\n' + dynamicContext
+    : knowledgeContext;
+
   const messages: Message[] = [
-    { role: 'system', content: SYSTEM_PROMPT + '\n\n' + knowledgeContext },
+    { role: 'system', content: SYSTEM_PROMPT + '\n\n' + fullContext },
     ...conversationHistory,
     { role: 'user', content: question },
   ];

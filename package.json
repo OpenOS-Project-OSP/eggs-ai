@@ -5,7 +5,8 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "eggs-ai": "./bin/eggs-ai.js"
+    "eggs-ai": "./bin/eggs-ai.js",
+    "eggs-ai-mcp": "./dist/mcp/server.js"
   },
   "exports": {
     ".": "./dist/index.js",

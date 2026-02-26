@@ -218,6 +218,15 @@ program
     console.log(formatSystemInfo(info));
   });
 
+// ─── mcp (Model Context Protocol server) ─────────────────
+program
+  .command('mcp')
+  .description('Start MCP server over stdio (for AI agent integration)')
+  .action(async () => {
+    // MCP runs over stdio — no banner, no console output
+    await import('./mcp/server.js');
+  });
+
 // ─── serve (HTTP API for eggs-gui integration) ───────────
 program
   .command('serve')
@@ -332,6 +341,42 @@ providers:
     writeFileSync(configPath, sample, 'utf-8');
     console.log(chalk.green(`Created sample config at ${configPath}`));
     console.log(chalk.dim('Edit it to add your providers, then use --provider <name>.'));
+  });
+
+// ─── update (refresh knowledge cache) ─────────────────────
+program
+  .command('update')
+  .description('Fetch latest penguins-eggs data from GitHub (issues, releases, README)')
+  .option('--clear', 'Clear cache before fetching')
+  .action(async (cmdOpts) => {
+    console.log(BANNER);
+    const { fetchRecentIssues, fetchLatestRelease, fetchReadme, clearCache } = await import('./knowledge/updater.js');
+
+    if (cmdOpts.clear) {
+      clearCache();
+      console.log(chalk.dim('Cache cleared.'));
+    }
+
+    const spinner = ora('Fetching latest data from GitHub...').start();
+    try {
+      const [issues, release, readme] = await Promise.all([
+        fetchRecentIssues(0), // TTL=0 forces refresh
+        fetchLatestRelease(0),
+        fetchReadme(0),
+      ]);
+
+      spinner.succeed('Knowledge base updated.');
+      console.log();
+
+      if (release) {
+        console.log(chalk.bold(`Latest release: ${release.version}`) + chalk.dim(` (${release.publishedAt})`));
+      }
+      console.log(chalk.dim(`Recent issues fetched: ${issues.length}`));
+      console.log(chalk.dim(`README cached: ${readme ? 'yes' : 'no'}`));
+    } catch (err) {
+      spinner.fail('Failed to fetch data.');
+      console.error(chalk.red(err instanceof Error ? err.message : String(err)));
+    }
   });
 
 // ─── interactive chat ─────────────────────────────────────
