@@ -26,7 +26,7 @@ Eggs-AI understands penguins-eggs commands, configurations, and workflows. It pr
 ## Installation
 
 ```bash
-git clone <this-repo>
+git clone https://github.com/Interested-Deving-1896/eggs-ai.git
 cd eggs-ai
 npm install
 npm run build

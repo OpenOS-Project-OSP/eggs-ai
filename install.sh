@@ -66,7 +66,7 @@ install_from_source() {
     if command -v git &>/dev/null; then
       dim "Cloning repository..."
       rm -rf "$INSTALL_DIR"
-      git clone --depth 1 https://github.com/eggs-ai/eggs-ai.git "$INSTALL_DIR" 2>/dev/null
+      git clone --depth 1 https://github.com/Interested-Deving-1896/eggs-ai.git "$INSTALL_DIR" 2>/dev/null
       cd "$INSTALL_DIR"
       npm install --production 2>/dev/null
       npm run build 2>/dev/null
@@ -96,7 +96,7 @@ install_systemd_service() {
   cat > "$SERVICE_FILE" << 'EOF'
 [Unit]
 Description=Eggs-AI API Server
-Documentation=https://github.com/eggs-ai/eggs-ai
+Documentation=https://github.com/Interested-Deving-1896/eggs-ai
 After=network.target
 
 [Service]

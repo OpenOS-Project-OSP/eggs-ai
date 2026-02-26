@@ -1,6 +1,6 @@
 [Unit]
 Description=Eggs-AI API Server
-Documentation=https://github.com/eggs-ai/eggs-ai
+Documentation=https://github.com/Interested-Deving-1896/eggs-ai
 After=network.target
 # Start after eggs-gui daemon if present
 After=eggs-gui.service
