@@ -5,6 +5,9 @@ on:
     - cron: '0 0 * * *' # Daily at midnight UTC
   workflow_dispatch: # Allow manual trigger
 
+permissions:
+  contents: write
+
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -13,12 +16,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Sync upstream
         run: |
           git remote add upstream https://github.com/Interested-Deving-1896/eggs-ai.git
           git fetch upstream
-          for branch in $(git branch -r --list 'upstream/*' | sed 's|upstream/||' | tr -d ' '); do
+          for branch in $(git branch -r --list 'upstream/*' | grep -v HEAD | sed 's|upstream/||' | tr -d ' '); do
             if git show-ref --verify --quiet "refs/heads/$branch"; then
               git checkout "$branch"
               git merge "upstream/$branch" --no-edit
