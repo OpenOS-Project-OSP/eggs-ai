@@ -36,6 +36,9 @@ jobs:
           # Fetch latest changes from the mirror before pushing
           git fetch mirror
 
+          # Ensure the local branch is up-to-date with the remote before pushing
+          git pull mirror main --rebase
+
           git push mirror --all --force
           git push mirror --tags --force
 
