@@ -5,7 +5,6 @@ on:
     branches: ["**"]
     tags: ["**"]
   schedule:
-    # Hourly sync to catch any missed push events
     - cron: "0 * * * *"
   workflow_dispatch:
 
@@ -29,17 +28,8 @@ jobs:
           git config --global credential.helper store
           printf 'https://x-access-token:%s@github.com\n' "$MIRROR_TOKEN" \
             > ~/.git-credentials
-
           git remote add mirror \
             "https://github.com/OpenOS-Project-OSP/eggs-ai.git"
-
-          # Fetch latest changes from the mirror before pushing
-          git fetch mirror
-
-          # Ensure the local branch is up-to-date with the remote before pushing
-          git pull mirror main --rebase
-
           git push mirror --all --force
           git push mirror --tags --force
-
           rm -f ~/.git-credentials
