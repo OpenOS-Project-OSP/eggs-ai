@@ -18,6 +18,9 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Create and checkout a new branch
+        run: git checkout -b temp-branch
+
       - name: Fetch all branches and tags
         run: git fetch --all --tags --prune
 
