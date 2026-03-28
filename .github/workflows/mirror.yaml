@@ -5,6 +5,7 @@ on:
     branches: ["**"]
     tags: ["**"]
   schedule:
+    # Hourly sync to catch any missed push events
     - cron: "0 * * * *"
   workflow_dispatch:
 
@@ -12,20 +13,17 @@ jobs:
   mirror:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout full history
+      - name: Checkout full history (detached HEAD)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           persist-credentials: false
-
-      - name: Create and checkout a new branch
-        run: git checkout -b temp-branch
+          # Detached HEAD avoids "refusing to fetch into checked-out branch"
+          # when git fetch --all tries to update refs/heads/main.
+          ref: ${{ github.sha }}
 
       - name: Fetch all branches and tags
         run: git fetch --all --tags --prune
-
-      - name: Checkout main branch
-        run: git checkout main
 
       - name: Push mirror to OpenOS-Project-OSP
         env:
@@ -36,6 +34,6 @@ jobs:
             > ~/.git-credentials
           git remote add mirror \
             "https://github.com/OpenOS-Project-OSP/eggs-ai.git"
-          git push mirror --all --force
+          git push mirror 'refs/remotes/origin/*:refs/heads/*' --force
           git push mirror --tags --force
           rm -f ~/.git-credentials
