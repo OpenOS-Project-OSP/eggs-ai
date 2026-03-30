@@ -1,3 +1,4 @@
+```yaml
 name: Mirror to OpenOS-Project-OSP
 
 on:
@@ -33,7 +34,8 @@ jobs:
           printf 'https://x-access-token:%s@github.com\n' "$MIRROR_TOKEN" \
             > ~/.git-credentials
           git remote add mirror \
-            "https://github.com/OpenOS-Project-OSP/eggs-ai.git"
+            "https://x-access-token:${{ secrets.MIRROR_TOKEN }}@github.com/OpenOS-Project-OSP/eggs-ai.git"
           git push mirror 'refs/remotes/origin/*:refs/heads/*' --force
           git push mirror --tags --force
           rm -f ~/.git-credentials
+```  
