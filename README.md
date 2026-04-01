@@ -1,6 +1,6 @@
 # Eggs-AI
 
-AI agent for [Penguins-Eggs](https://github.com/pieroproietti/penguins-eggs) — the universal Linux remastering tool.
+AI agent for [Penguins-Eggs](https://github.com/Interested-Deving-1896/penguins-eggs) — the universal Linux remastering tool.
 
 Eggs-AI understands penguins-eggs commands, configurations, and workflows. It provides diagnostics, guided ISO building, config generation, Calamares assistance, and general Q&A.
 
@@ -444,7 +444,7 @@ func (c *Client) AskAI(question string) (string, error) {
 
 ## Related Projects
 
-- [penguins-eggs](https://github.com/pieroproietti/penguins-eggs) — The remastering tool itself
+- [penguins-eggs](https://github.com/Interested-Deving-1896/penguins-eggs) — The remastering tool itself
 - [ai-pkg](https://github.com/rohankrsingh/ai-pkg) — AI package recommender (inspiration)
 - [opencode](https://github.com/anomalyco/opencode) — Open source AI coding agent (inspiration)
 
